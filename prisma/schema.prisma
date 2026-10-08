@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VehicleStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  SUSPENDED
+}
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VehicleRecord {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String?
+  vehicleNumber      String?
+  phoneNumber        String?
+  email              String?
+  startDate          DateTime?
+  endDate            DateTime?
+  status             VehicleStatus @default(ACTIVE)
+  lastReminderSentAt DateTime?
+  suspendedAt        DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  renewals PassRenewal[]
+
+  @@index([name])
+  @@index([vehicleNumber])
+  @@index([phoneNumber])
+  @@index([email])
+  @@index([status])
+  @@index([endDate])
+}
+
+model PassRenewal {
+  id            String    @id @default(uuid()) @db.Uuid
+  vehicleId     String    @db.Uuid
+  renewalNumber Int
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime  @default(now())
+
+  vehicle VehicleRecord @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, renewalNumber])
+  @@index([vehicleId])
+}
